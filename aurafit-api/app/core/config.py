@@ -49,7 +49,7 @@ class Settings(BaseSettings):
 
     # _______ CORS ___________________________
     CORS_ORIGINS: list[AnyHttpUrl] = []
-    CORS_ALLOW_CREDENTIIALS: bool = True
+    CORS_ALLOW_CREDENTIALS: bool = True
 
     # _______ RATE LIMITING __________________
     RATE_LIMIT_REQUESTS: int = 100

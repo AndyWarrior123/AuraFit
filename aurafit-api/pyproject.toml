@@ -35,7 +35,7 @@ dependencies = [
     "httpx>=0.28.1",                    # Async HTTP: Google tokeninfo + Fitness API
 
     # ---- AI Integration -------------------
-    "google-generativeai>=0.8.3",
+    "google-genai",
     
     # ---- Resilience -----------------------
     "tenacity>=9.0.0",                  # Exponential backoff for Gemini + Google APIs
@@ -159,7 +159,7 @@ plugins = [
 ]
 
 [[tool.mypy.overrides]]
-module = ["google.generativeai.*", "structlog.*", "asyncpg.*"]
+module = ["google.genai.*", "google.*", "structlog.*", "asyncpg.*"]
 ignore_missing_stubs = true
 
 # ---- Pytest -------------------------------

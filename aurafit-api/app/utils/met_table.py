@@ -1,0 +1,38 @@
+# Abridged 2011 Compendium of Physical Activities (Ainsworth et al.)
+# Key format: EXERCISE_TYPE or EXERCISE_TYPE_INTENSITY
+# Value: MET (kcal / kg / hour)
+
+MET_TABLE: dict[str, float] = {
+    "RUN_LIGHT": 6.0,
+    "RUN_MODERATE": 9.8,
+    "RUN_VIGOROUS": 12.8,
+    "RUN": 9.8,
+    "WALK_LIGHT": 2.5,
+    "WALK_MODERATE": 3.5,
+    "WALK_VIGOROUS": 4.5,
+    "WALK": 3.5,
+    "CYCLE_LIGHT": 4.0,
+    "CYCLE_MODERATE": 8.0,
+    "CYCLE_VIGOROUS": 12.0,
+    "CYCLE": 8.0,
+    "SWIM_LIGHT": 5.8,
+    "SWIM_MODERATE": 8.3,
+    "SWIM_VIGOROUS": 10.0,
+    "SWIM": 8.3,
+    "LIFT_LIGHT": 3.0,
+    "LIFT_MODERATE": 5.0,
+    "LIFT_VIGOROUS": 6.0,
+    "LIFT": 5.0,
+    "YOGA": 2.5,
+    "PILATES": 3.0,
+    "HIIT_MODERATE": 8.0,
+    "HIIT_VIGOROUS": 12.0,
+    "HIIT": 10.0,
+    "HIKE_LIGHT": 4.0,
+    "HIKE_MODERATE": 5.3,
+    "HIKE_VIGOROUS": 7.0,
+    "HIKE": 5.3,
+    "STRETCH": 2.3,
+    "SPORT": 7.0,
+    "OTHER": 4.0,
+}

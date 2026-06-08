@@ -25,7 +25,7 @@ class CharacterStats(Base):
         index=True,
     )
 
-    start_date: Mapped[date] = mapped_column(
+    stat_date: Mapped[date] = mapped_column(
         Date,
         nullable=False,
         index=True,
@@ -62,7 +62,7 @@ class CharacterStats(Base):
 
     def __repr__(self) -> str:
         return (
-            f"<CharacterStats user={self.user_id} date={self.start_date} "
+            f"<CharacterStats user={self.user_id} date={self.stat_date} "
             f"lvl={self.level_at_snapshot} xp={self.cumulative_xp}>"
         )
 

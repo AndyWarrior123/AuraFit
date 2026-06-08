@@ -4,5 +4,6 @@
   "pythonVersion": "3.12",
   "typeCheckingMode": "basic",
   "reportCallIssue": false,
-  "reportMissingModuleSource": false
+  "reportMissingModuleSource": false,
+  "reportPrivateImportUsage": false
 }
