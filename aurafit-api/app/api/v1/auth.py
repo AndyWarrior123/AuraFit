@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.dependencies import get_db, get_current_user
 from app.core.security import (
     verify_google_id_token,
@@ -37,7 +38,6 @@ async def refresh_access_token(
     body: RefreshTokenRequest,
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
-    from sqlalchemy import select
     payload = decode_refresh_token(body.refresh_token)
     user_id: str = payload.get("sub", "")
 

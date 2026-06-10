@@ -14,38 +14,31 @@ classifiers = [
 ]
 
 dependencies = [
-
     # ---- Web Framework --------------------
     "fastapi >= 0.115.5",
     "uvicorn[standard]>=0.32.1",        # 'standard' pulls in websockets + uvloop
     "python-multipart>=0.0.12",         # Required for FastAPI form () and file uploads
-
     # ---- Database -------------------------
     "sqlalchemy[asyncio]>=2.0.36",      # ORM + Core with async extension
-    "asyncpg>=0.30.0",                  # PostgreSQL async driver 
+    "asyncpg>=0.30.0",                  # PostgreSQL async driver
     "alembic>=1.14.0",                  # Schema Migration Engine
-
     # ---- Validation & Configuration -------
     "pydantic>=2.10.3",
     "pydantic-settings>=2.7.0",         # .env -> typed Settings model
     "email-validator>=2.2.0",           # Enables Pydantic EmailStr
-
     # ---- Authentication -------------------
     "python-jose[cryptography]>=3.3.0", # JWT encode / decode
     "httpx>=0.28.1",                    # Async HTTP: Google tokeninfo + Fitness API
-
     # ---- AI Integration -------------------
     "google-genai",
-    
     # ---- Resilience -----------------------
     "tenacity>=9.0.0",                  # Exponential backoff for Gemini + Google APIs
-
     # ---- Observability --------------------
     "structlog>=24.4.0",                # Structured JSON logging
-
     # ---- Performance ----------------------
     "orjson>=3.10.12",                  # 2-3x fast JSON serialisation than stdlib
-
+    "psycopg[binary]>=3.3.4",
+    "psycopg2>=2.9.12",
 ]
 
 [project.optional-dependencies]

@@ -60,7 +60,7 @@ class Settings(BaseSettings):
     @classmethod
     def jwt_secret_must_be_strong(cls, v:str) -> str:
         if len(v) < 32:
-            raise ValueError("JWT_SECRET_KEY must be atleast 32 characters long")
+            raise ValueError("JWT_SECRET_KEY must be at least 32 characters long")
         return v
     
     @field_validator("GEMINI_TEMPERATURE")

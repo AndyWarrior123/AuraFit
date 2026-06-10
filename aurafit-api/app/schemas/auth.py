@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field
 
 class GoogleTokenRequest(BaseModel):
-    id_token: str = Field(..., description="Google ID toke from Sign-In SDK")
+    id_token: str = Field(..., description="Google ID token from Sign-In SDK")
     client_type: str = Field(default="web", description="'web' or 'android'")
 
 class TokenResponse(BaseModel):

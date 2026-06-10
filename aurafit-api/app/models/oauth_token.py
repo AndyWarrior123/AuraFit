@@ -1,8 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
-from app.models.user import User
 
 class OAuthToken(Base):
     __tablename__ = "oauth_tokens"
@@ -39,7 +38,7 @@ class OAuthToken(Base):
 
     @property
     def is_expired(self) -> bool:
-        return datetime.utcnow() >= self.expires_at
+        return datetime.now(timezone.utc) >= self.expires_at
 
     @property
     def scope_list(self) -> list[str]:

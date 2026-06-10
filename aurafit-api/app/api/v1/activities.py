@@ -58,3 +58,4 @@ async def delete_activity(
     if not entry:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Activity not found")
     await db.delete(entry)
+    await db.flush()

@@ -3,9 +3,6 @@ import enum
 from sqlalchemy import String, Float, Integer, Enum as SAEnum, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.db.base import Base
-from app.models.activity_log import ActivityLog
-from app.models.character_stats import CharacterStats
-from app.models.oauth_token import OAuthToken
 
 class Gender(str, enum.Enum):
     MALE="MALE"
