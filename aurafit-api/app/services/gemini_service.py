@@ -1,10 +1,18 @@
 import json
 from google import genai
 from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+from google.genai.errors import ClientError
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception
 from app.core.config import get_settings
 from app.schemas.activity import ParsedActivityDto
 import structlog
+
+
+def _is_retryable(exc: BaseException) -> bool:
+    """Only retry on transient server errors, not quota/auth failures."""
+    if isinstance(exc, ClientError):
+        return exc.status_code in (500, 502, 503, 504)
+    return True
 
 log = structlog.get_logger()
 settings = get_settings()
@@ -59,7 +67,7 @@ _CONFIG = types.GenerateContentConfig(
 @retry(
     stop=stop_after_attempt(3),
     wait=wait_exponential(multiplier=1, min=1, max=8),
-    retry=retry_if_exception_type(Exception),
+    retry=retry_if_exception(_is_retryable),
     reraise=True,
 )
 async def parse_activity_transcript(transcript: str) -> ParsedActivityDto | None:
