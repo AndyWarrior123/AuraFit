@@ -15,3 +15,4 @@ dist/
 # OS
 .DS_Store
 Thumbs.db
+http://localhost:5173/login
