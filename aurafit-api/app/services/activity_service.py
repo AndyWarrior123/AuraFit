@@ -20,9 +20,32 @@ import structlog
 
 log = structlog.get_logger()
 
+
+class DuplicateActivityError(Exception):
+    pass
+
+
 _CARDIO_TYPES = {
     ExerciseType.RUN, ExerciseType.CYCLE, ExerciseType.SWIM,
     ExerciseType.HIKE, ExerciseType.HIIT, ExerciseType.WALK,
+}
+
+# Used to estimate duration when only distance is provided (minutes per km).
+_PACE_MIN_PER_KM: dict[ExerciseType, float] = {
+    ExerciseType.RUN: 6.0,
+    ExerciseType.WALK: 12.0,
+    ExerciseType.HIKE: 15.0,
+    ExerciseType.CYCLE: 3.0,
+    ExerciseType.SWIM: 4.0,
+}
+
+# Step length as a fraction of height (single foot contact).
+# Walking/Hike: clinical gait analysis (Lindemann et al., J Biomechanics); ratio ≈ 0.413
+# Running: biomechanical studies (Journal of Physiological Anthropology); ratio ≈ 0.52
+_STEP_LENGTH_RATIO: dict[ExerciseType, float] = {
+    ExerciseType.WALK: 0.413,
+    ExerciseType.HIKE: 0.413,
+    ExerciseType.RUN: 0.520,
 }
 
 
@@ -88,12 +111,59 @@ async def create_activity_log(
     user: User,
     data: ActivityLogCreate,
 ) -> ActivityLog:
+    # Spam guard: reject manual logs that duplicate an identical entry within 5 minutes.
+    if data.source == ActivitySource.MANUAL and data.exercise_type and data.duration_minutes:
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+        dupe_result = await db.execute(
+            select(ActivityLog)
+            .where(ActivityLog.user_id == user.id)
+            .where(ActivityLog.exercise_type == data.exercise_type)
+            .where(ActivityLog.source == ActivitySource.MANUAL)
+            .where(ActivityLog.logged_at >= cutoff)
+            .where(func.abs(ActivityLog.duration_minutes - data.duration_minutes) < 1)
+        )
+        if dupe_result.scalar_one_or_none():
+            raise DuplicateActivityError(
+                f"An identical {data.exercise_type.value} entry was already logged within the last 5 minutes."
+            )
+
+    # If distance is given but duration is missing, estimate from typical pace so
+    # calorie calculation has something to work with.
+    effective_duration = data.duration_minutes
+    if effective_duration is None and data.distance_km and data.exercise_type in _PACE_MIN_PER_KM:
+        effective_duration = round(data.distance_km * _PACE_MIN_PER_KM[data.exercise_type], 1)
+        log.info(
+            "activity.duration_estimated",
+            exercise_type=data.exercise_type.value,
+            distance_km=data.distance_km,
+            estimated_minutes=effective_duration,
+        )
+
+    # Estimate step count from distance + user height when not explicitly provided.
+    # Uses biomechanically validated step-length-to-height ratios (walking 0.413, running 0.52).
+    effective_steps = data.steps_count
+    if (
+        effective_steps is None
+        and data.distance_km
+        and data.exercise_type in _STEP_LENGTH_RATIO
+        and user.height_cm
+    ):
+        step_length_m = (user.height_cm / 100) * _STEP_LENGTH_RATIO[data.exercise_type]
+        effective_steps = round((data.distance_km * 1000) / step_length_m)
+        log.info(
+            "activity.steps_estimated",
+            exercise_type=data.exercise_type.value,
+            distance_km=data.distance_km,
+            height_cm=user.height_cm,
+            estimated_steps=effective_steps,
+        )
+
     xp = _entry_xp(data)
 
-    # Auto-calculate calories if exercise type + duration provided but calories missing
+    # Auto-calculate calories using effective duration (original or estimated).
     calories = data.calories_burned
-    if calories is None and data.exercise_type and data.duration_minutes and user.weight_kg:
-        calories = calories_from_met(data.exercise_type.value, data.duration_minutes, user.weight_kg)
+    if calories is None and data.exercise_type and effective_duration and user.weight_kg:
+        calories = calories_from_met(data.exercise_type.value, effective_duration, user.weight_kg)
 
     log_entry = ActivityLog(
         user_id=user.id,
@@ -101,7 +171,7 @@ async def create_activity_log(
         logged_at=data.logged_at,
         source=data.source,
         exercise_type=data.exercise_type,
-        duration_minutes=data.duration_minutes,
+        duration_minutes=effective_duration,
         distance_km=data.distance_km,
         calories_burned=calories,
         reps_count=data.reps_count,
@@ -115,7 +185,7 @@ async def create_activity_log(
         sleep_duration_minutes=data.sleep_duration_minutes,
         sleep_quality_score=data.sleep_quality_score,
         hc_record_id=data.hc_record_id,
-        steps_count=data.steps_count,
+        steps_count=effective_steps,
         xp_awarded=xp,
         raw_transcript=data.raw_transcript,
     )

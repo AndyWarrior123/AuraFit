@@ -8,6 +8,7 @@ from app.services.activity_service import (
     create_activity_log,
     get_today_summary,
     get_activity_history,
+    DuplicateActivityError,
 )
 from app.models.activity_log import ActivityLog, ActivitySource
 from app.models.user import User
@@ -21,7 +22,10 @@ async def log_activity(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_active_profile_user),
 ) -> ActivityLogRead:
-    entry = await create_activity_log(db, current_user, body)
+    try:
+        entry = await create_activity_log(db, current_user, body)
+    except DuplicateActivityError as exc:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(exc))
     return ActivityLogRead.model_validate(entry)
 
 

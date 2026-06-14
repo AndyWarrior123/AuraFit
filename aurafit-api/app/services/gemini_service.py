@@ -53,6 +53,11 @@ water_ml — liters × 1000, "a glass" = 250, "a bottle" = 500
 duration_minutes — "an hour" = 60, "half an hour" = 30
 sleep_duration_minutes — only if user mentions sleep explicitly
 notes — clean summary of what was logged, max 120 chars, always populate
+
+INFERENCE RULES (only when a value is absent from the transcript):
+- distance_km given but duration_minutes absent: estimate duration using typical paces (RUN ≈ 6 min/km, WALK ≈ 12 min/km, CYCLE ≈ 3 min/km, SWIM ≈ 4 min/km, HIKE ≈ 15 min/km)
+- duration_minutes given but distance_km absent: leave distance_km null, do not estimate
+- Never infer values that would imply a physically impossible speed (e.g. running 60 km/h)
 """.strip()
 
 _client = genai.Client(api_key=settings.GEMINI_API_KEY)
