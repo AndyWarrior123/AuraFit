@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { LayoutDashboard, Swords, BarChart3, User, LogOut, Zap } from 'lucide-react'
 import { useAuthStore } from '../auth/useAuthStore'
+import { useCharacterSheet } from '../hooks/useCharacter'
 import { CharacterBadge } from './CharacterBadge'
 
 const NAV_ITEMS = [
@@ -13,6 +14,10 @@ const NAV_ITEMS = [
 
 export function Layout() {
   const { user, logout } = useAuthStore()
+  const { data: sheet } = useCharacterSheet()
+  const liveLevel = sheet?.stats.level_at_snapshot ?? user?.current_level ?? 1
+  const liveClass = sheet?.stats.character_class ?? user?.character_class ?? 'NOVICE'
+  const liveStreak = sheet?.stats.current_streak_days ?? 0
 
   return (
     <div className="flex h-screen overflow-hidden bg-space-900">
@@ -62,9 +67,9 @@ export function Layout() {
         {user && (
           <div className="px-6 py-5 border-b border-white/5">
             <CharacterBadge
-              characterClass={user.character_class}
-              level={user.current_level}
-              streakDays={0}
+              characterClass={liveClass}
+              level={liveLevel}
+              streakDays={liveStreak}
               displayName={user.display_name}
               avatarUrl={user.avatar_url}
               compact

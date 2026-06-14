@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { User, Save, BarChart3, Zap, Activity, RefreshCw } from 'lucide-react'
+import { User, Save, BarChart3, Zap, Activity, RefreshCw, RotateCcw } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../hooks/useProfile'
-import { useCharacterSheet, useRecalculateCharacter } from '../hooks/useCharacter'
+import { useCharacterSheet, useRecalculateCharacter, useResetCharacter } from '../hooks/useCharacter'
 import { useAuthStore } from '../auth/useAuthStore'
 import { CharacterBadge } from '../components/CharacterBadge'
 import { StatBar } from '../components/StatBar'
@@ -15,6 +15,9 @@ export function ProfilePage() {
   const { data: sheet } = useCharacterSheet()
   const updateMutation = useUpdateProfile()
   const recalcMutation = useRecalculateCharacter()
+
+  const resetMutation = useResetCharacter()
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -119,6 +122,40 @@ export function ProfilePage() {
                 <RefreshCw size={12} className={recalcMutation.isPending ? 'animate-spin' : ''} />
                 {recalcMutation.isPending ? 'Recalculating...' : 'Recalculate Stats'}
               </button>
+
+              {confirmReset ? (
+                <div className="mt-2 p-3 rounded-xl space-y-2" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.3)' }}>
+                  <p className="text-xs text-red-400 text-center font-medium">This deletes ALL activity logs and resets you to Level 1. Cannot be undone.</p>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setConfirmReset(false)}
+                      className="flex-1 py-1.5 rounded-lg text-xs text-slate-400 border border-white/10 hover:bg-white/5 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => { resetMutation.mutate(); setConfirmReset(false) }}
+                      disabled={resetMutation.isPending}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-semibold text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors"
+                    >
+                      {resetMutation.isPending ? 'Resetting...' : 'Yes, Reset'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setConfirmReset(true)}
+                  className="w-full mt-1 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all"
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.06)',
+                    border: '1px solid rgba(239, 68, 68, 0.2)',
+                    color: '#ef4444',
+                  }}
+                >
+                  <RotateCcw size={12} />
+                  Reset Character
+                </button>
+              )}
             </div>
           )}
         </div>

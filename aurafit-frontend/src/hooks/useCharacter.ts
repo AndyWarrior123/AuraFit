@@ -22,3 +22,14 @@ export function useRecalculateCharacter() {
     },
   })
 }
+
+export function useResetCharacter() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: () => apiClient.post('/character/reset'),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['character'] })
+      qc.invalidateQueries({ queryKey: ['activities'] })
+    },
+  })
+}

@@ -1,5 +1,6 @@
 import dataclasses
 from dataclasses import dataclass
+from functools import lru_cache
 
 @dataclass
 class DailyHealthTotals:
@@ -67,11 +68,7 @@ _XP_RATES: dict[str, float] = {
     "hydration_bonus": 50.0,
     "sleep_bonus": 75.0,
     "streak_per_day": 5.0,
-    "daily_cap": 500.0,
 }
-
-_LEVEL_BASE = 100
-_LEVEL_EXPONENT = 1.5
 
 def calculate_daily_xp(totals: DailyHealthTotals) -> int:
     xp = 0.0
@@ -84,23 +81,41 @@ def calculate_daily_xp(totals: DailyHealthTotals) -> int:
     if totals.sleep_minutes >= 420:
         xp += _XP_RATES["sleep_bonus"]
     xp += totals.streak_days * _XP_RATES["streak_per_day"]
-    return min(int(xp), int(_XP_RATES["daily_cap"]))
+    return int(xp)
+
+
+@lru_cache(maxsize=None)
+def _xp_limit_for_level(level: int) -> int:
+    """XP needed within `level` to advance to the next level."""
+    if level <= 1:
+        return 100
+    prev = _xp_limit_for_level(level - 1)
+    return int(prev + (level * 5) * (prev / 100))
+
+
+@lru_cache(maxsize=None)
+def _xp_to_enter_level(level: int) -> int:
+    """Cumulative XP required to enter `level` (0 for level 1)."""
+    if level <= 1:
+        return 0
+    return _xp_to_enter_level(level - 1) + _xp_limit_for_level(level - 1)
 
 
 def xp_required_for_level(level: int) -> int:
-    return int(_LEVEL_BASE * (level ** _LEVEL_EXPONENT))
+    """Cumulative XP at which you advance beyond `level`."""
+    return _xp_to_enter_level(level + 1)
 
 
 def current_level_from_xp(total_xp: int) -> int:
     level = 1
-    while xp_required_for_level(level + 1) <= total_xp:
+    while _xp_to_enter_level(level + 1) <= total_xp:
         level += 1
     return level
 
 
 def xp_to_next_level(total_xp: int) -> int:
     level = current_level_from_xp(total_xp)
-    return xp_required_for_level(level + 1) - total_xp
+    return _xp_to_enter_level(level + 1) - total_xp
 
 
 def assign_character_class(scores: AttributeScores, level: int) -> str:

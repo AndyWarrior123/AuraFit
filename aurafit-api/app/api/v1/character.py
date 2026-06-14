@@ -1,7 +1,7 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from app.core.dependencies import get_db, get_active_profile_user
 from app.schemas.character import (
     CharacterStatsRead,
@@ -12,7 +12,8 @@ from app.schemas.character import (
 from app.services.activity_service import recalculate_character_stats
 from app.services.character_engine import xp_to_next_level
 from app.models.character_stats import CharacterStats
-from app.models.user import User
+from app.models.activity_log import ActivityLog
+from app.models.user import User, CharacterClass
 
 router = APIRouter()
 
@@ -91,3 +92,18 @@ async def force_recalculate(
          "xp_to_next_level": xp_to_next_level(stats.cumulative_xp),
          "character_class": current_user.character_class}
     )
+
+
+@router.post("/reset")
+async def reset_character(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_active_profile_user),
+) -> dict:
+    await db.execute(delete(CharacterStats).where(CharacterStats.user_id == current_user.id))
+    await db.execute(delete(ActivityLog).where(ActivityLog.user_id == current_user.id))
+    current_user.total_xp = 0
+    current_user.current_level = 1
+    current_user.character_class = CharacterClass("NOVICE")
+    db.add(current_user)
+    await db.commit()
+    return {"status": "reset"}

@@ -87,15 +87,31 @@ export const EXERCISE_ICONS: Record<ExerciseType, string> = {
   OTHER: '💪',
 }
 
+// XP needed within `level` to advance to the next level.
+// Formula: prev_limit + (level × 5) × (prev_limit / 100)
+export function xpLimitForLevel(level: number): number {
+  if (level <= 1) return 100
+  const prev = xpLimitForLevel(level - 1)
+  return Math.floor(prev + (level * 5) * (prev / 100))
+}
+
+// Cumulative XP required to enter `level` (0 for level 1).
+export function xpToEnterLevel(level: number): number {
+  if (level <= 1) return 0
+  let total = 0
+  for (let i = 1; i < level; i++) total += xpLimitForLevel(i)
+  return total
+}
+
+// Cumulative XP at which you advance BEYOND `level` (used for stale-snapshot check).
 export function xpRequiredForLevel(level: number): number {
-  return Math.floor(100 * Math.pow(level, 1.5))
+  return xpToEnterLevel(level + 1)
 }
 
 export function xpProgressInLevel(totalXp: number, level: number) {
-  const start = xpRequiredForLevel(level - 1)
-  const end = xpRequiredForLevel(level)
+  const start = xpToEnterLevel(level)
+  const needed = xpLimitForLevel(level)
   const current = Math.max(0, totalXp - start)
-  const needed = end - start
   return {
     current,
     needed,
@@ -104,5 +120,9 @@ export function xpProgressInLevel(totalXp: number, level: number) {
 }
 
 export function dailyXpGoal(level: number): number {
-  return Math.floor(500 * Math.pow(1.1, level - 1))
+  let goal = 300
+  for (let i = 2; i <= level; i++) {
+    goal = Math.floor(goal + (i * 5) * (goal / 100))
+  }
+  return goal
 }
