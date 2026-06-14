@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import { Mic, PenSquare, Calendar, Zap } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { VoiceInput } from '../components/VoiceInput'
 import { ActivityCard, ActivityCardSkeleton, EmptyQuestLog } from '../components/ActivityCard'
 import { useTodaySummary } from '../hooks/useActivities'
@@ -53,9 +54,14 @@ function ManualForm({ onSuccess }: { onSuccess: () => void }) {
       sleep_duration_minutes: form.sleep_duration_minutes ? parseInt(form.sleep_duration_minutes) : null,
     }
     try {
-      await apiClient.post<ActivityLogRead>('/activities/', payload)
+      const { data: logged } = await apiClient.post<ActivityLogRead>('/activities/', payload)
+      await apiClient.post('/character/recalculate')
       qc.invalidateQueries({ queryKey: ['activities'] })
       qc.invalidateQueries({ queryKey: ['character'] })
+      toast.success(`+${logged.xp_awarded} XP · ${logged.exercise_type ? logged.exercise_type.charAt(0) + logged.exercise_type.slice(1).toLowerCase() : 'Activity'}`, {
+        icon: '⚡',
+        style: { color: '#06b6d4', borderColor: 'rgba(6, 182, 212, 0.3)' },
+      })
       onSuccess()
     } catch {
       setError('Failed to log activity. Make sure at least one field is filled.')

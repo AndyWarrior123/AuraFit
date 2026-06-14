@@ -92,11 +92,17 @@ export function xpRequiredForLevel(level: number): number {
 }
 
 export function xpProgressInLevel(totalXp: number, level: number) {
-  const start = xpRequiredForLevel(level)
-  const end = xpRequiredForLevel(level + 1)
+  const start = xpRequiredForLevel(level - 1)
+  const end = xpRequiredForLevel(level)
+  const current = Math.max(0, totalXp - start)
+  const needed = end - start
   return {
-    current: totalXp - start,
-    needed: end - start,
-    percent: Math.min(((totalXp - start) / (end - start)) * 100, 100),
+    current,
+    needed,
+    percent: Math.min((current / needed) * 100, 100),
   }
+}
+
+export function dailyXpGoal(level: number): number {
+  return Math.floor(500 * Math.pow(1.1, level - 1))
 }

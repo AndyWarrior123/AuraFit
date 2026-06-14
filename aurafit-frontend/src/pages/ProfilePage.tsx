@@ -1,8 +1,8 @@
 import { motion } from 'framer-motion'
 import { useState } from 'react'
-import { User, Save, BarChart3, Zap, Activity } from 'lucide-react'
+import { User, Save, BarChart3, Zap, Activity, RefreshCw } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../hooks/useProfile'
-import { useCharacterSheet } from '../hooks/useCharacter'
+import { useCharacterSheet, useRecalculateCharacter } from '../hooks/useCharacter'
 import { useAuthStore } from '../auth/useAuthStore'
 import { CharacterBadge } from '../components/CharacterBadge'
 import { StatBar } from '../components/StatBar'
@@ -14,6 +14,7 @@ export function ProfilePage() {
   const { data: profile } = useProfile()
   const { data: sheet } = useCharacterSheet()
   const updateMutation = useUpdateProfile()
+  const recalcMutation = useRecalculateCharacter()
 
   const [editing, setEditing] = useState(false)
   const [form, setForm] = useState({
@@ -105,6 +106,19 @@ export function ProfilePage() {
                   <span className="text-sm font-bold" style={{ color }}>{value}</span>
                 </div>
               ))}
+              <button
+                onClick={() => recalcMutation.mutate()}
+                disabled={recalcMutation.isPending}
+                className="w-full mt-2 flex items-center justify-center gap-2 py-2 rounded-xl text-xs font-medium transition-all"
+                style={{
+                  background: 'rgba(168, 85, 247, 0.08)',
+                  border: '1px solid rgba(168, 85, 247, 0.25)',
+                  color: recalcMutation.isPending ? '#64748b' : '#a855f7',
+                }}
+              >
+                <RefreshCw size={12} className={recalcMutation.isPending ? 'animate-spin' : ''} />
+                {recalcMutation.isPending ? 'Recalculating...' : 'Recalculate Stats'}
+              </button>
             </div>
           )}
         </div>

@@ -55,7 +55,7 @@ export function ActivityCard({ activity, index = 0 }: ActivityCardProps) {
 
   return (
     <motion.div
-      className="glow-card rounded-xl p-3.5 flex items-center gap-3"
+      className="glow-card rounded-xl p-3.5 flex items-center gap-3 group"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 20 }}
@@ -121,14 +121,12 @@ export function ActivityCard({ activity, index = 0 }: ActivityCardProps) {
             </button>
           </motion.div>
         ) : (
-          <motion.button
-            initial={{ opacity: 0 }}
-            whileHover={{ opacity: 1 }}
-            className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-colors ml-1"
+          <button
+            className="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all ml-1"
             onClick={() => setConfirmDelete(true)}
           >
             <Trash2 size={14} />
-          </motion.button>
+          </button>
         )}
       </AnimatePresence>
     </motion.div>

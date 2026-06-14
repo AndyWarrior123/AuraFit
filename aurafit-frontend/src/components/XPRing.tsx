@@ -53,7 +53,7 @@ export function XPRing({ totalXp, level, size = 160 }: XPRingProps) {
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="url(#xpGradient)"
+          stroke={percent >= 100 ? 'url(#xpGoldGradient)' : 'url(#xpGradient)'}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -66,6 +66,10 @@ export function XPRing({ totalXp, level, size = 160 }: XPRingProps) {
           <linearGradient id="xpGradient" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#a855f7" />
             <stop offset="100%" stopColor="#06b6d4" />
+          </linearGradient>
+          <linearGradient id="xpGoldGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#f59e0b" />
+            <stop offset="100%" stopColor="#fbbf24" />
           </linearGradient>
         </defs>
       </svg>
@@ -82,14 +86,26 @@ export function XPRing({ totalXp, level, size = 160 }: XPRingProps) {
         >
           {level}
         </motion.span>
-        <motion.span
-          className="text-xs text-cyan-400"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1 }}
-        >
-          {current.toLocaleString()} / {needed.toLocaleString()}
-        </motion.span>
+        {percent >= 100 ? (
+          <motion.span
+            className="text-xs font-semibold"
+            style={{ color: '#f59e0b' }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            Level up!
+          </motion.span>
+        ) : (
+          <motion.span
+            className="text-xs text-cyan-400"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            {current.toLocaleString()} / {needed.toLocaleString()}
+          </motion.span>
+        )}
         <span className="text-xs text-slate-600">XP</span>
       </div>
     </div>
