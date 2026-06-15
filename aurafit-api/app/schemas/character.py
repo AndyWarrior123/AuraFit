@@ -54,3 +54,13 @@ class CharacterSheetRead(BaseModel):
     """Full character sheet response — stats + attribute breakdown."""
     stats: CharacterStatsRead
     attributes: AttributeBreakdown
+
+
+class LifetimeStatsRead(BaseModel):
+    """Aggregated lifetime totals across all CharacterStats rows."""
+    total_steps: int
+    total_active_minutes: int
+    total_calories_burned: int
+    total_water_ml: int
+    sleep_hours: float
+    days_logged: int

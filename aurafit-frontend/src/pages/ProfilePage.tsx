@@ -2,7 +2,7 @@ import { motion } from 'framer-motion'
 import { useState } from 'react'
 import { User, Save, BarChart3, Zap, Activity, RefreshCw, RotateCcw } from 'lucide-react'
 import { useProfile, useUpdateProfile } from '../hooks/useProfile'
-import { useCharacterSheet, useRecalculateCharacter, useResetCharacter } from '../hooks/useCharacter'
+import { useCharacterSheet, useRecalculateCharacter, useResetCharacter, useLifetimeStats } from '../hooks/useCharacter'
 import { useAuthStore } from '../auth/useAuthStore'
 import { CharacterBadge } from '../components/CharacterBadge'
 import { StatBar } from '../components/StatBar'
@@ -15,6 +15,7 @@ export function ProfilePage() {
   const { data: sheet } = useCharacterSheet()
   const updateMutation = useUpdateProfile()
   const recalcMutation = useRecalculateCharacter()
+  const { data: lifetime } = useLifetimeStats()
 
   const resetMutation = useResetCharacter()
   const [confirmReset, setConfirmReset] = useState(false)
@@ -101,8 +102,10 @@ export function ProfilePage() {
               {[
                 { label: 'Total XP', value: stats.cumulative_xp.toLocaleString(), color: '#06b6d4' },
                 { label: 'Longest Streak', value: `${stats.longest_streak_days} days`, color: '#f97316' },
-                { label: 'Total Steps', value: stats.total_steps.toLocaleString(), color: '#22c55e' },
-                { label: 'Active Minutes', value: `${stats.total_active_minutes} min`, color: '#a855f7' },
+                { label: 'Days Logged', value: (lifetime?.days_logged ?? '—').toString(), color: '#64748b' },
+                { label: 'Total Steps', value: lifetime ? lifetime.total_steps.toLocaleString() : '—', color: '#22c55e' },
+                { label: 'Active Minutes', value: lifetime ? `${lifetime.total_active_minutes.toLocaleString()} min` : '—', color: '#a855f7' },
+                { label: 'Calories Burned', value: lifetime ? lifetime.total_calories_burned.toLocaleString() : '—', color: '#f97316' },
               ].map(({ label, value, color }) => (
                 <div key={label} className="flex justify-between items-center">
                   <span className="text-sm text-slate-500">{label}</span>

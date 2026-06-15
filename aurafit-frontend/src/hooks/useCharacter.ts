@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
-import type { CharacterSheetRead } from '../api/types'
+import type { CharacterSheetRead, LifetimeStats } from '../api/types'
 
 export function useCharacterSheet() {
   return useQuery({
@@ -20,6 +20,17 @@ export function useRecalculateCharacter() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['character'] })
     },
+  })
+}
+
+export function useLifetimeStats() {
+  return useQuery({
+    queryKey: ['character', 'lifetime'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<LifetimeStats>('/character/lifetime')
+      return data
+    },
+    staleTime: 60_000,
   })
 }
 

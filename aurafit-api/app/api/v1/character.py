@@ -1,13 +1,14 @@
 from datetime import date
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select, delete, func
 from app.core.dependencies import get_db, get_active_profile_user
 from app.schemas.character import (
     CharacterStatsRead,
     CharacterSheetRead,
     AttributeBreakdown,
     AttributeDetail,
+    LifetimeStatsRead,
 )
 from app.services.activity_service import recalculate_character_stats
 from app.services.character_engine import xp_to_next_level
@@ -91,6 +92,32 @@ async def force_recalculate(
         {**stats.__dict__,
          "xp_to_next_level": xp_to_next_level(stats.cumulative_xp),
          "character_class": current_user.character_class}
+    )
+
+
+@router.get("/lifetime", response_model=LifetimeStatsRead)
+async def get_lifetime_stats(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_active_profile_user),
+) -> LifetimeStatsRead:
+    result = await db.execute(
+        select(
+            func.coalesce(func.sum(CharacterStats.total_steps), 0).label("total_steps"),
+            func.coalesce(func.sum(CharacterStats.total_active_minutes), 0).label("total_active_minutes"),
+            func.coalesce(func.sum(CharacterStats.total_calories_burned), 0).label("total_calories_burned"),
+            func.coalesce(func.sum(CharacterStats.total_water_ml), 0).label("total_water_ml"),
+            func.coalesce(func.sum(CharacterStats.sleep_minutes), 0).label("sleep_minutes"),
+            func.count(CharacterStats.id).label("days_logged"),
+        ).where(CharacterStats.user_id == current_user.id)
+    )
+    row = result.one()
+    return LifetimeStatsRead(
+        total_steps=row.total_steps,
+        total_active_minutes=row.total_active_minutes,
+        total_calories_burned=row.total_calories_burned,
+        total_water_ml=row.total_water_ml,
+        sleep_hours=round(row.sleep_minutes / 60, 1),
+        days_logged=row.days_logged,
     )
 
 

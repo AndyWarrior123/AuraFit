@@ -113,6 +113,15 @@ export interface DailySummaryRead {
   logs: ActivityLogRead[]
 }
 
+export interface LifetimeStats {
+  total_steps: number
+  total_active_minutes: number
+  total_calories_burned: number
+  total_water_ml: number
+  sleep_hours: number
+  days_logged: number
+}
+
 export interface ProfileSetupRequest {
   display_name: string
   height_cm: number

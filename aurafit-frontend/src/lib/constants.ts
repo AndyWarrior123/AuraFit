@@ -126,3 +126,11 @@ export function dailyXpGoal(level: number): number {
   }
   return goal
 }
+
+export function getSeason(): { waterMl: number; sleepMin: number; label: string } {
+  const m = new Date().getMonth() + 1
+  if ([12, 1, 2].includes(m)) return { waterMl: 2500, sleepMin: 420, label: 'Summer' }
+  if ([3, 4, 5].includes(m)) return { waterMl: 2000, sleepMin: 450, label: 'Autumn' }
+  if ([6, 7, 8].includes(m)) return { waterMl: 1500, sleepMin: 480, label: 'Winter' }
+  return { waterMl: 2000, sleepMin: 450, label: 'Spring' }
+}

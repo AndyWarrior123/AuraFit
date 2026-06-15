@@ -8,7 +8,7 @@ import { useTodaySummary } from '../hooks/useActivities'
 import { useQueryClient } from '@tanstack/react-query'
 import { apiClient } from '../api/client'
 import type { ActivityLogRead, ExerciseType } from '../api/types'
-import { EXERCISE_ICONS } from '../lib/constants'
+import { EXERCISE_ICONS, getSeason } from '../lib/constants'
 
 type LogMode = 'voice' | 'manual'
 type LogCategory = 'exercise' | 'hydration' | 'sleep'
@@ -39,14 +39,6 @@ const FIELD_SETS: Record<ExerciseType, FieldSet> = {
   HIIT:    { duration: true,  distance: false, heartRate: true,  setsReps: false, weight: false },
   SPORT:   { duration: true,  distance: false, heartRate: true,  setsReps: false, weight: false },
   OTHER:   { duration: true,  distance: false, heartRate: true,  setsReps: false, weight: false },
-}
-
-function getSeason(): { waterMl: number; sleepMin: number; label: string } {
-  const m = new Date().getMonth() + 1
-  if ([12, 1, 2].includes(m)) return { waterMl: 2500, sleepMin: 420, label: 'Summer' }
-  if ([3, 4, 5].includes(m)) return { waterMl: 2000, sleepMin: 450, label: 'Autumn' }
-  if ([6, 7, 8].includes(m)) return { waterMl: 1500, sleepMin: 480, label: 'Winter' }
-  return { waterMl: 2000, sleepMin: 450, label: 'Spring' }
 }
 
 // Shared post-submit hook (called after each form submit)
@@ -451,6 +443,11 @@ function SleepForm({ onSuccess }: { onSuccess: () => void }) {
 function ManualEntry({ onSuccess }: { onSuccess: () => void }) {
   const [category, setCategory] = useState<LogCategory>('exercise')
 
+  function handleChildSuccess() {
+    setCategory('exercise')
+    onSuccess()
+  }
+
   const tabs: { id: LogCategory; label: string; icon: React.ReactNode }[] = [
     { id: 'exercise', label: 'Exercise', icon: <Dumbbell size={13} /> },
     { id: 'hydration', label: 'Hydration', icon: <Droplets size={13} /> },
@@ -490,9 +487,9 @@ function ManualEntry({ onSuccess }: { onSuccess: () => void }) {
           exit={{ opacity: 0 }}
           transition={{ duration: 0.18 }}
         >
-          {category === 'exercise' && <ExerciseForm onSuccess={onSuccess} />}
-          {category === 'hydration' && <HydrationForm onSuccess={onSuccess} />}
-          {category === 'sleep' && <SleepForm onSuccess={onSuccess} />}
+          {category === 'exercise' && <ExerciseForm onSuccess={handleChildSuccess} />}
+          {category === 'hydration' && <HydrationForm onSuccess={handleChildSuccess} />}
+          {category === 'sleep' && <SleepForm onSuccess={handleChildSuccess} />}
         </motion.div>
       </AnimatePresence>
     </div>

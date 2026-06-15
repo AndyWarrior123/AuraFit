@@ -60,6 +60,41 @@ export function useVoiceParse() {
   })
 }
 
+export function useWeeklySummary() {
+  return useQuery({
+    queryKey: ['activities', 'weekly-summary'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ActivityLogRead[]>('/activities/history', {
+        params: { page: 1, page_size: 100 },
+      })
+      const weekStart = new Date()
+      weekStart.setDate(weekStart.getDate() - ((weekStart.getDay() + 6) % 7)) // Monday
+      weekStart.setHours(0, 0, 0, 0)
+      const weekLogs = data.filter(l => new Date(l.logged_at) >= weekStart)
+      return {
+        sessions: new Set(weekLogs.map(l => l.log_date)).size,
+        totalActiveMinutes: Math.round(weekLogs.reduce((s, l) => s + (l.duration_minutes ?? 0), 0)),
+        totalXp: weekLogs.reduce((s, l) => s + l.xp_awarded, 0),
+        totalCalories: weekLogs.reduce((s, l) => s + (l.calories_burned ?? 0), 0),
+      }
+    },
+    staleTime: 60_000,
+  })
+}
+
+export function useRecentActivities() {
+  return useQuery({
+    queryKey: ['activities', 'recent-100'],
+    queryFn: async () => {
+      const { data } = await apiClient.get<ActivityLogRead[]>('/activities/history', {
+        params: { page: 1, page_size: 100 },
+      })
+      return data
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useXpHistory() {
   return useQuery({
     queryKey: ['activities', 'xp-history'],
