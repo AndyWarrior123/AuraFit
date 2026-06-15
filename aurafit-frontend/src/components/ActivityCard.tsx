@@ -17,9 +17,16 @@ const ZONE_CONFIG: Record<string, { label: string; color: string }> = {
   PEAK:     { label: 'PEAK',     color: '#ef4444' },
 }
 
+function formatDuration(minutes: number): string {
+  if (minutes < 60) return `${Math.round(minutes)} min`
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return m > 0 ? `${h}h ${m}m` : `${h}h`
+}
+
 function formatDetail(activity: ActivityLogRead): string {
   const parts: string[] = []
-  if (activity.duration_minutes) parts.push(`${Math.round(activity.duration_minutes)}m`)
+  if (activity.duration_minutes) parts.push(formatDuration(activity.duration_minutes))
   if (activity.distance_km) parts.push(`${activity.distance_km.toFixed(1)}km`)
   if (activity.reps_count) {
     parts.push(activity.sets_count ? `${activity.sets_count}×${activity.reps_count}` : `${activity.reps_count} reps`)

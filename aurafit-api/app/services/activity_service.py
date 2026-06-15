@@ -48,23 +48,52 @@ _STEP_LENGTH_RATIO: dict[ExerciseType, float] = {
     ExerciseType.RUN: 0.520,
 }
 
+# (intensity_modifier, distance_reward_per_km)
+_INTENSITY_CONFIG: dict[ExerciseType, tuple[float, float]] = {
+    ExerciseType.RUN:     (2.0, 10.0),
+    ExerciseType.HIIT:    (2.0, 10.0),
+    ExerciseType.WALK:    (1.0,  5.0),
+    ExerciseType.HIKE:    (1.0,  5.0),
+    ExerciseType.CYCLE:   (1.0,  5.0),
+    ExerciseType.SWIM:    (1.0,  5.0),
+    ExerciseType.LIFT:    (1.5,  0.0),
+    ExerciseType.YOGA:    (1.5,  0.0),
+    ExerciseType.PILATES: (1.5,  0.0),
+    ExerciseType.STRETCH: (1.5,  0.0),
+    ExerciseType.SPORT:   (1.5,  0.0),
+    ExerciseType.OTHER:   (1.5,  0.0),
+}
 
-def _entry_xp(data: ActivityLogCreate) -> int:
-    """Quick per-entry XP for immediate feedback on the log card."""
-    xp = 0
-    if data.duration_minutes:
-        xp += int(data.duration_minutes * 2)
-    if data.distance_km:
-        xp += int(data.distance_km * 15)
-    if data.weight_lifted_kg and data.reps_count and data.sets_count:
-        xp += int((data.weight_lifted_kg * data.reps_count * data.sets_count) / 100) * 10
-    if data.steps_count:
-        xp += int(data.steps_count / 1000) * 5
-    if data.water_ml and data.water_ml >= 500:
-        xp += 20
-    if data.sleep_duration_minutes and data.sleep_duration_minutes >= 360:
-        xp += 50
-    return min(xp, 200)
+
+def _fatigue_multiplier(prior_active_minutes: float) -> float:
+    if prior_active_minutes < 90:
+        return 1.0
+    if prior_active_minutes < 180:
+        return 0.5
+    return 0.1
+
+
+def _entry_xp(data: ActivityLogCreate, prior_active_minutes: float = 0.0) -> int:
+    """Per-entry XP for the activity card badge, using physiological effort formula."""
+    # Non-exercise entries: water, sleep, steps
+    if data.exercise_type is None:
+        xp = 0
+        if data.water_ml and data.water_ml >= 500:
+            xp += 20
+        if data.sleep_duration_minutes and data.sleep_duration_minutes >= 360:
+            xp += 50
+        if data.steps_count:
+            xp += int(data.steps_count / 1000) * 5
+        return min(xp, 200)
+
+    # Spam guard: sub-2-minute workouts earn zero XP
+    if not data.duration_minutes or data.duration_minutes < 2:
+        return 0
+
+    intensity_mod, distance_reward = _INTENSITY_CONFIG.get(data.exercise_type, (1.5, 0.0))
+    M = _fatigue_multiplier(prior_active_minutes)
+    raw = (data.duration_minutes * intensity_mod) + ((data.distance_km or 0) * distance_reward)
+    return int(raw * M)
 
 
 def _aggregate_logs(logs: list[ActivityLog]) -> DailyHealthTotals:
@@ -158,7 +187,16 @@ async def create_activity_log(
             estimated_steps=effective_steps,
         )
 
-    xp = _entry_xp(data)
+    # Sum of active minutes already logged today — drives the fatigue multiplier
+    prior_result = await db.execute(
+        select(func.coalesce(func.sum(ActivityLog.duration_minutes), 0.0))
+        .where(ActivityLog.user_id == user.id)
+        .where(ActivityLog.log_date == data.log_date)
+        .where(ActivityLog.exercise_type.is_not(None))
+    )
+    prior_active_minutes: float = prior_result.scalar() or 0.0
+
+    xp = _entry_xp(data, prior_active_minutes)
 
     # Auto-calculate calories using effective duration (original or estimated).
     calories = data.calories_burned

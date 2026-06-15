@@ -35,11 +35,24 @@ export function LoginPage() {
     setLoading(true)
     setError('')
     try {
+      // Decode the Google JWT payload client-side to get the picture URL directly.
+      // base64url uses - and _ instead of + and /
+      const b64 = credentialResponse.credential.split('.')[1]
+        .replace(/-/g, '+').replace(/_/g, '/')
+      const googleClaims = JSON.parse(atob(b64)) as Record<string, string>
+      const googlePicture: string | null = googleClaims.picture ?? null
+
       const { data: tokens } = await authApi.loginWithGoogle(credentialResponse.credential)
       const { data: user } = await apiClient.get<UserRead>('/auth/me', {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       })
-      login(tokens.access_token, tokens.refresh_token, user)
+
+      // Prefer the picture from the Google JWT — it's guaranteed fresh.
+      // Falls back to whatever the backend stored if the JWT claim is absent.
+      login(tokens.access_token, tokens.refresh_token, {
+        ...user,
+        avatar_url: googlePicture ?? user.avatar_url,
+      })
       navigate(user.profile_complete ? '/dashboard' : '/onboarding')
     } catch {
       setError('Sign-in failed. Make sure the backend is running and Google credentials are configured.')

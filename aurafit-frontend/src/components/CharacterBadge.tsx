@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { Flame } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { CLASS_CONFIG } from '../lib/constants'
 import type { CharacterClass } from '../api/types'
 
@@ -21,6 +22,10 @@ export function CharacterBadge({
   compact = false,
 }: CharacterBadgeProps) {
   const cls = CLASS_CONFIG[characterClass]
+  const [imgError, setImgError] = useState(false)
+
+  // Reset error state whenever the URL itself changes
+  useEffect(() => { setImgError(false) }, [avatarUrl])
 
   if (compact) {
     return (
@@ -45,8 +50,13 @@ export function CharacterBadge({
           style={{ borderColor: cls.color + '66' }}
           whileHover={{ scale: 1.05 }}
         >
-          {avatarUrl ? (
-            <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+          {avatarUrl && !imgError ? (
+            <img
+              src={avatarUrl}
+              alt={displayName}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <div
               className="w-full h-full flex items-center justify-center text-3xl"
