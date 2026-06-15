@@ -14,12 +14,15 @@ interface StatBarProps {
 export function StatBar({ statKey, score, drivenBy, delay = 0 }: StatBarProps) {
   const cfg = STAT_CONFIG[statKey]
   const [hovered, setHovered] = useState(false)
+  const [clicked, setClicked] = useState(false)
+  const visible = hovered || clicked
 
   return (
     <div
       className="relative group"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      onClick={() => setClicked(c => !c)}
     >
       <div className="flex items-center gap-3 mb-1.5">
         <span
@@ -55,7 +58,7 @@ export function StatBar({ statKey, score, drivenBy, delay = 0 }: StatBarProps) {
       <motion.div
         className="absolute left-0 -bottom-10 z-20 pointer-events-none"
         initial={{ opacity: 0, y: -4 }}
-        animate={{ opacity: hovered ? 1 : 0, y: hovered ? 0 : -4 }}
+        animate={{ opacity: visible ? 1 : 0, y: visible ? 0 : -4 }}
         transition={{ duration: 0.15 }}
       >
         <div
