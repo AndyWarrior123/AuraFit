@@ -1,7 +1,9 @@
+import json
 from functools import lru_cache
-from pydantic import AnyHttpUrl, EmailStr, field_validator, model_validator
+from typing import Any, Literal
+
+from pydantic import AnyHttpUrl, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from typing import Literal
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -48,8 +50,22 @@ class Settings(BaseSettings):
     GEMINI_TEMPERATURE: float = 0.0
 
     # _______ CORS ___________________________
-    CORS_ORIGINS: list[AnyHttpUrl] = []
+    CORS_ORIGINS: list[Any] = []
     CORS_ALLOW_CREDENTIALS: bool = True
+
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Any) -> list[str]:
+        if isinstance(v, list):
+            return v
+        if isinstance(v, str):
+            v = v.strip()
+            if not v:
+                return []
+            if v.startswith("["):
+                return json.loads(v)
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
     # _______ RATE LIMITING __________________
     RATE_LIMIT_REQUESTS: int = 100
