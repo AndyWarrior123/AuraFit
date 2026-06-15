@@ -10,6 +10,13 @@ interface ActivityCardProps {
   index?: number
 }
 
+const ZONE_CONFIG: Record<string, { label: string; color: string }> = {
+  REST:     { label: 'REST',     color: '#64748b' },
+  FAT_BURN: { label: 'FAT BURN', color: '#22c55e' },
+  CARDIO:   { label: 'CARDIO',   color: '#f97316' },
+  PEAK:     { label: 'PEAK',     color: '#ef4444' },
+}
+
 function formatDetail(activity: ActivityLogRead): string {
   const parts: string[] = []
   if (activity.duration_minutes) parts.push(`${Math.round(activity.duration_minutes)}m`)
@@ -19,7 +26,11 @@ function formatDetail(activity: ActivityLogRead): string {
   }
   if (activity.calories_burned) parts.push(`${activity.calories_burned} kcal`)
   if (activity.water_ml) parts.push(`${activity.water_ml}ml water`)
-  if (activity.sleep_duration_minutes) parts.push(`${Math.round(activity.sleep_duration_minutes / 60 * 10) / 10}h sleep`)
+  if (activity.sleep_duration_minutes) {
+    const hrs = Math.round(activity.sleep_duration_minutes / 60 * 10) / 10
+    const qual = activity.sleep_quality_score ? ` · Q:${activity.sleep_quality_score}/10` : ''
+    parts.push(`${hrs}h sleep${qual}`)
+  }
   if (activity.steps_count) parts.push(`${activity.steps_count.toLocaleString()} steps`)
   return parts.join(' · ') || 'Logged'
 }
@@ -85,7 +96,21 @@ export function ActivityCard({ activity, index = 0 }: ActivityCardProps) {
             {activity.source === 'VOICE' ? '🎤' : activity.source === 'HEALTH_CONNECT' ? '💚' : '✏️'}
           </span>
         </div>
-        <p className="text-xs text-slate-400 mt-0.5 truncate">{formatDetail(activity)}</p>
+        <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
+          <p className="text-xs text-slate-400 truncate">{formatDetail(activity)}</p>
+          {activity.heart_rate_zone && ZONE_CONFIG[activity.heart_rate_zone] && (
+            <span
+              className="text-[10px] font-bold px-1.5 py-0.5 rounded shrink-0"
+              style={{
+                background: ZONE_CONFIG[activity.heart_rate_zone].color + '18',
+                color: ZONE_CONFIG[activity.heart_rate_zone].color,
+                border: `1px solid ${ZONE_CONFIG[activity.heart_rate_zone].color}44`,
+              }}
+            >
+              {ZONE_CONFIG[activity.heart_rate_zone].label}
+            </span>
+          )}
+        </div>
         {activity.raw_transcript && (
           <p className="text-xs text-slate-600 mt-0.5 italic truncate">"{activity.raw_transcript}"</p>
         )}
